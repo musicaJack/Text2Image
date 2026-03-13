@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text2Image - 文生图</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    label { display: block; margin-top: 1rem; font-weight: 500; }
+    input, select, textarea, button { width: 100%; padding: 0.5rem; margin-top: 0.25rem; font-size: 1rem; }
+    textarea { min-height: 100px; resize: vertical; }
+    button { background: #2563eb; color: white; border: none; cursor: pointer; margin-top: 1rem; padding: 0.75rem; border-radius: 6px; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .result { margin-top: 1.5rem; }
+    .result img { max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .error { color: #dc2626; margin-top: 0.5rem; }
+    .loading { color: #64748b; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <nav><a href="/models.html">模型介绍</a></nav>
+  <h1>Text2Image 文生图</h1>
+  <form id="form">
+    <label>描述（prompt）</label>
+    <textarea id="prompt" placeholder="例如：赛博朋克风格的城市夜景" required></textarea>
+    <label>模型</label>
+    <select id="model">
+      <option value="qwen-image-2.0-pro">加载中...</option>
+    </select>
+    <label>分辨率</label>
+    <select id="size">
+      <option value="1024*1024">1024×1024</option>
+      <option value="1280*720">1280×720</option>
+      <option value="720*1280">720×1280</option>
+    </select>
+    <button type="submit" id="btn">生成</button>
+  </form>
+  <div id="status"></div>
+  <div id="result" class="result"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const modelEl = document.getElementById('model');
+
+    // 从 API 动态加载模型列表
+    fetch('/api/v1/models')
+      .then(r => r.json())
+      .then(data => {
+        modelEl.innerHTML = data.models.map(m =>
+          `<option value="${m.id}">${m.name}${m.recommended ? '（推荐）' : ''}</option>`
+        ).join('');
+        const params = new URLSearchParams(location.search);
+        const modelParam = params.get('model');
+        if (modelParam) {
+          const opt = modelEl.querySelector(`option[value="${modelParam}"]`);
+          if (opt) opt.selected = true;
+        }
+      })
+      .catch(() => {
+        modelEl.innerHTML = '<option value="qwen-image-2.0-pro">Qwen-Image-2.0-Pro</option>';
+      });
+
+    const promptEl = document.getElementById('prompt');
+    const sizeEl = document.getElementById('size');
+    const btn = document.getElementById('btn');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      statusEl.className = 'loading';
+      statusEl.textContent = '生成中...';
+      resultEl.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/v1/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: promptEl.value.trim(),
+            model: modelEl.value,
+            size: sizeEl.value,
+            prompt_extend: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || data.message || '请求失败');
+        resultEl.innerHTML = `<img src="${data.image}" alt="生成的图像">`;
+        statusEl.textContent = '';
+        statusEl.className = '';
+      } catch (err) {
+        statusEl.className = 'error';
+        statusEl.textContent = err.message || '生成失败';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

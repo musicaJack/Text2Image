@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型介绍 - Text2Image</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav { margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; }
+    .recommended { color: #059669; font-weight: 500; }
+    #loading { color: #64748b; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">← 返回生成</a></nav>
+  <h1>模型介绍</h1>
+  <p id="loading">加载中...</p>
+  <div id="content" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>模型</th>
+          <th>简介</th>
+          <th>适用场景</th>
+          <th>输出规格</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    fetch('/api/v1/models')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        const tbody = document.getElementById('tbody');
+        data.models.forEach(m => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <a href="/?model=${encodeURIComponent(m.id)}">${m.name}</a>
+              ${m.recommended ? '<span class="recommended">推荐</span>' : ''}
+            </td>
+            <td>${m.desc}</td>
+            <td>${m.scenes.join('、') || '-'}</td>
+            <td>${m.output || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(() => {
+        document.getElementById('loading').textContent = '加载失败';
+      });
+  </script>
+</body>
+</html>
