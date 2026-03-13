@@ -200,7 +200,7 @@ def get_model_service(repo) -> ModelService: ...
 | `deps.py` | 依赖注入工厂 | ~30 |
 | `v1/router.py` | 聚合路由，挂载到 app | ~15 |
 | `v1/generate.py` | 接收 GenerateRequest，调用 ImageService，返回 GenerateResponse | ~40 |
-| `v1/models.py` | 调用 ModelService，返回模型列表 | ~15 |
+| `v1/models.py` | 调用 ModelService，返回模型列表（供首页下拉菜单选项） | ~15 |
 
 **原则**：不包含 if/else 业务分支，只做「接收 → 调用 → 返回」。
 

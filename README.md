@@ -54,7 +54,7 @@ docker run -p 8000:8000 -e DASHSCOPE_API_KEY=sk-xxx text2image
 
 ## 页面
 
-- `/` - 首页（生成）
+- `/` - 首页（生成）：输入 prompt、**通过下拉菜单选择模型**、点击生成
 - `/models.html` - 模型介绍
 
 ## 架构
